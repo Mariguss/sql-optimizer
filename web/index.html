@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL Optimizer - Анализатор запросов</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 SQL Optimizer</h1>
+        <p>Введите SQL запрос для анализа производительности:</p>
+        
+        <textarea id="sqlQuery" placeholder="SELECT * FROM users WHERE age > 25"></textarea>
+        <br>
+        <button onclick="analyzeQuery()">Анализировать запрос</button>
+        
+        <div id="result" class="result">
+            <p>Здесь появится результат анализа...</p>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeQuery() {
+            const query = document.getElementById('sqlQuery').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!query) {
+                resultDiv.innerHTML = '<p class="error">❌ Введите SQL запрос</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>⏳ Анализируем запрос...</p>';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let html = '<h3>✅ Результат анализа:</h3>';
+                    html += '<p><strong>Общая стоимость:</strong> ' + result.data.total_cost + '</p>';
+                    
+                    if (result.data.problematic_operations.length > 0) {
+                        html += '<h4>⚠️ Проблемные операции:</h4>';
+                        result.data.problematic_operations.forEach(op => {
+                            html += `<div style="margin: 10px 0; padding: 10px; border-left: 3px solid #ff6b6b; background: #fff5f5;">
+                                <strong>${op.node_type}</strong> - ${op.description}<br>
+                                💡 <em>Рекомендация:</em> ${op.recommendation}
+                            </div>`;
+                        });
+                    }
+                    
+                    if (result.data.recommendations.length > 0) {
+                        html += '<h4>💡 Рекомендации:</h4><ul>';
+                        result.data.recommendations.forEach(rec => {
+                            html += `<li>${rec}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Ошибка: ${result.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Ошибка подключения: ${error}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
