@@ -12,6 +12,10 @@ type Client struct {
 	db *sql.DB
 }
 
+type PlanGetter interface {
+ GetExplainPlan(ctx context.Context, query string) (string, error)
+}
+
 func NewClient(connectionString string) (*Client, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {

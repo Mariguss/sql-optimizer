@@ -27,7 +27,7 @@ func (h *Handler) AnalyzeQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("📨 Получен запрос: %s\n", req.Query)
+	fmt.Printf("Получен запрос: %s\n", req.Query)
 
 	planJSON, err := h.pgClient.GetExplainPlan(r.Context(), req.Query)
 	if err != nil {
@@ -45,7 +45,7 @@ func (h *Handler) AnalyzeQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("✅ Результат анализа: %+v\n", result)
+	fmt.Printf("Результат анализа: %+v\n", result)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
