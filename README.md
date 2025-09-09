@@ -24,7 +24,7 @@ cd sql-optimizer
 ```bash
 docker-compose up --build
 ```
-### 3. Открыть на localhost с портом 8081
+### 3. Открыть на localhost с портом 8180
 Либо уже развернутое http://185.159.111.69:8081/
 
 ### 4.Подключение
