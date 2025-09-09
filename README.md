@@ -33,3 +33,6 @@ docker-compose up --build
 ### 5.Ссылка на яндекс диск
 https://disk.yandex.ru/d/05B6JRSrTCFShA
 
+### 6.Ссылка на видео на яндекс диске
+https://disk.yandex.ru/d/zHJxrqF0cKkhKw
+
