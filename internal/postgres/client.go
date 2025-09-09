@@ -12,10 +12,6 @@ type Client struct {
 	db *sql.DB
 }
 
-type PlanGetter interface {
- GetExplainPlan(ctx context.Context, query string) (string, error)
-}
-
 func NewClient(connectionString string) (*Client, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -36,17 +32,17 @@ func (c *Client) Close() error {
 // GetExplainPlan получает план выполнения в формате JSON
 
 func (c *Client) GetExplainPlan(ctx context.Context, query string) (string, error) {
-    var planJSON string
-    
-    explainQuery := fmt.Sprintf("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) %s", query)
-    
-    fmt.Printf("🚀 Выполняем: %s\n", explainQuery)
-    
-    err := c.db.QueryRowContext(ctx, explainQuery).Scan(&planJSON)
-    if err != nil {
-        return "", fmt.Errorf("ошибка выполнения EXPLAIN: %v", err)
-    }
+	var planJSON string
 
-    fmt.Printf("📋 Получен JSON плана: %s\n", planJSON)
-    return planJSON, nil
+	explainQuery := fmt.Sprintf("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) %s", query)
+
+	fmt.Printf("Выполняем: %s\n", explainQuery)
+
+	err := c.db.QueryRowContext(ctx, explainQuery).Scan(&planJSON)
+	if err != nil {
+		return "", fmt.Errorf("ошибка выполнения EXPLAIN: %v", err)
+	}
+
+	fmt.Printf("Получен JSON плана: %s\n", planJSON)
+	return planJSON, nil
 }

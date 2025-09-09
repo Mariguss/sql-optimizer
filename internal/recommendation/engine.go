@@ -105,10 +105,10 @@ type AnalysisResult struct {
 
 // ProblematicOperation представляет проблемную операцию
 type ProblematicOperation struct {
-	NodeType      string
-	Cost          float64
-	ActualTime    *float64
-	Description   string
+	NodeType       string
+	Cost           float64
+	ActualTime     *float64
+	Description    string
 	Recommendation string
-	Severity      string
+	Severity       string
 }
