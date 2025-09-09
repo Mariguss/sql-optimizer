@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"net/http" // Add this line
+	"sql-optimizer/internal/analyzer"
+	"sql-optimizer/internal/postgres" // Add this line
 	"time"
 
 	_ "github.com/lib/pq"
@@ -94,30 +97,35 @@ func (h *Handler) AnalyzeQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := getDB(req.DBConfig)
+	// Создаем клиент к БД, который будет закрыт в конце
+	pgClient, err := postgres.NewClient(fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		req.DBConfig.Host, req.DBConfig.Port, req.DBConfig.User, req.DBConfig.Password, req.DBConfig.DBName))
 	if err != nil {
 		http.Error(w, "Ошибка подключения к БД: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer db.Close() // Соединение будет жить только на время этого запроса
+	defer pgClient.Close()
 
-	// Проверяем соединение перед анализом
-	if err = db.Ping(); err != nil {
-		http.Error(w, "Ошибка ping БД перед анализом: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	explainQuery := fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", req.Query)
-
-	// EXPLAIN всегда возвращает одну строку и один столбец
-	var planJSON string
-	err = db.QueryRow(explainQuery).Scan(&planJSON)
+	// Получаем JSON план выполнения
+	planJSON, err := pgClient.GetExplainPlan(ctx, req.Query)
 	if err != nil {
-		http.Error(w, "Ошибка выполнения EXPLAIN: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка получения плана EXPLAIN: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// EXPLAIN возвращает JSON как текст, его нужно отдать как "сырой" JSON
+	// Анализируем план и получаем результат
+	analysisResult, err := analyzer.AnalyzePlan(planJSON)
+	if err != nil {
+		http.Error(w, "Ошибка анализа плана: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Возвращаем полный результат анализа в формате JSON
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(planJSON))
+	if err := json.NewEncoder(w).Encode(analysisResult); err != nil {
+		http.Error(w, "Ошибка кодирования JSON: "+err.Error(), http.StatusInternalServerError)
+	}
 }
